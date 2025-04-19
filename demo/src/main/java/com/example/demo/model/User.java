@@ -3,6 +3,9 @@ package com.example.demo.model;
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.time.LocalDate;
+import java.util.UUID;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -20,6 +23,38 @@ public class User {
 
     @Column(name = "email", length = 100)
     private String email;
+
+    @Column(name = "session_token")
+    private UUID sessionToken;
+
+    @Column(name = "session_token_date")
+    private LocalDate sessionTokenDate;
+
+    public User() {
+
+    }
+
+    public LocalDate getSessionTokenDate() {
+        return sessionTokenDate;
+    }
+
+    public void setSessionTokenDate(LocalDate sessionTokenDate) {
+        this.sessionTokenDate = sessionTokenDate;
+    }
+
+    public UUID getSessionToken() {
+        return sessionToken;
+    }
+
+    public void setSessionToken(UUID sessionToken) {
+        this.sessionToken = sessionToken;
+    }
+
+    public User(String username, String password, String email) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+    }
 
     public Integer getId() {
         return id;
