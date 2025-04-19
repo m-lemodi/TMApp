@@ -5,6 +5,7 @@ import com.example.demo.error.InvalidPasswordException;
 import com.example.demo.error.UserNotFoundException;
 import com.example.demo.model.User;
 import com.example.demo.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -14,9 +15,11 @@ import java.util.UUID;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public User findUserByUsername(String username) throws UserNotFoundException {
@@ -33,6 +36,7 @@ public class UserService {
         if (EmailAlreadyExists(newUser.getEmail()))
             throw new EmailAlreadyExistsException("Email already used");
 
+        newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
         return userRepository.save(newUser);
 
     }
@@ -41,7 +45,7 @@ public class UserService {
     // Standard login function
     public User loginUser(String email, String password) throws InvalidPasswordException {
         User user = findUserByEmail(email);
-        if (!user.getPassword().equals(password))
+        if (user == null || !passwordEncoder.matches(password, user.getPassword()))
             throw new InvalidPasswordException("Invalid credentials");
 
         return createSession(user);

@@ -46,7 +46,7 @@ public class UserController {
 
         try {
             User user = userService.registerUser(newUser);
-            return new ResponseEntity<>(user.getUsername() + "has been registered successfully!", HttpStatus.OK);}
+            return new ResponseEntity<>(user.getUsername() + " has been registered successfully!", HttpStatus.OK);}
         catch (EmailAlreadyExistsException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
         }
