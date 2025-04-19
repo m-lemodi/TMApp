@@ -1,18 +1,22 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.UserRegistrationDTO;
 import com.example.demo.error.EmailAlreadyExistsException;
 import com.example.demo.error.InvalidPasswordException;
 import com.example.demo.error.UserNotFoundException;
 import com.example.demo.model.User;
 import com.example.demo.service.UserService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import static java.io.IO.println;
 
 @RestController
 @RequestMapping("/users")
+@Validated
 public class UserController {
 
     private final UserService userService;
@@ -32,20 +36,23 @@ public class UserController {
 
     }
 
-    @GetMapping("/register")
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> register(@RequestParam String username, @RequestParam String password, @RequestParam String email) {
-        User newUser = new User(username, password, email);
+    @PostMapping("/register")
+    public ResponseEntity<String> register(@Valid @RequestBody UserRegistrationDTO userRegistrationDTO) {
+        if (!userRegistrationDTO.getPassword().equals(userRegistrationDTO.getConfirmPassword())) {
+            return new ResponseEntity<>("Passwords do not match", HttpStatus.BAD_REQUEST);
+        }
+
+        User newUser = new User(userRegistrationDTO.getUsername(), userRegistrationDTO.getPassword(), userRegistrationDTO.getEmail());
+
         try {
             User user = userService.registerUser(newUser);
-            return new ResponseEntity<>(user.toString() + "has been registered successfully", HttpStatus.OK);}
+            return new ResponseEntity<>(user.getUsername() + "has been registered successfully!", HttpStatus.OK);}
         catch (EmailAlreadyExistsException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
         }
     }
 
-    @GetMapping("/login")
-    @ExceptionHandler(Exception.class)
+    @PostMapping("/login")
     public ResponseEntity<String> login(@RequestParam String email, @RequestParam String password) {
         try {
             User user = userService.loginUser(email, password);

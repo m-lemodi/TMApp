@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import static java.io.IO.println;
 
 @Service
 public class UserService {
