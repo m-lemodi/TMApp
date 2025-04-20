@@ -21,21 +21,20 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<String> addTask(@Valid @RequestBody AddTaskDTO addTaskDTO, @RequestHeader("user") User user) {
+    public ResponseEntity<String> addTask(@Valid @RequestBody AddTaskDTO addTaskDTO, @RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
         try {
-            taskService.addTask(new Task(addTaskDTO.getTitle(), addTaskDTO.getDescription(), addTaskDTO.getDueDate()), user);
-            return new ResponseEntity<>("New task: " + addTaskDTO.getTitle() + "has been created successfully",
+            Task task = taskService.addTask(new Task(addTaskDTO.getTitle(), addTaskDTO.getDescription(), addTaskDTO.getDueDate()), userId, sessionToken);
+            return new ResponseEntity<>("New task: " + task.getTitle() + "has been created successfully",
             HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity("Error creating task: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Error creating task: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<String> editTask(@PathVariable String title, @RequestBody Task task, @RequestHeader("user") User user) {
+    @PutMapping("/{title}")
+    public ResponseEntity<String> editTask(@PathVariable String title, @RequestBody AddTaskDTO taskDTO, @RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
         try {
-//            Implement search by user and title
-            taskService.editTask(title, task, user);
+            Task task = taskService.editTask(title, taskDTO, userId, sessionToken);
             return new ResponseEntity<>("Task: " + task.getTitle() + " has been updated successfully", HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Error updating task: "+ title + ". Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -44,25 +43,35 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<String> listTasksByUser(User user) {
+    public ResponseEntity<String> listTasksByUser(@RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
         try {
-            List<Task> tasks = taskService.getAllTasksForUser(user);
+            List<Task> tasks = taskService.getAllTasksForUser(userId, sessionToken);
             return new ResponseEntity<>("Tasks: " + tasks.toString(), HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Error getting tasks for user: "+ user.getUsername() + ". Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Error getting tasks. Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteTask(@PathVariable String title, @RequestHeader("user") User user) {
+    @DeleteMapping("/{title}")
+    public ResponseEntity<String> deleteTask(@PathVariable String title, @RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
         try {
 //            Implement search by user and title
-            Task task = taskService.deleteTask(title, user);
+            Task task = taskService.deleteTask(title, userId, sessionToken);
             return new ResponseEntity<>("Task "+ task.getTitle() + "has been deleted successfully", HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Error deleting task: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
+    }
+
+    @PutMapping("/{title}/complete")
+    public ResponseEntity<String> completeTask(@PathVariable String title, @RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
+        try {
+            Task task = taskService.completeTask(title, userId, sessionToken);
+            return new ResponseEntity<>("Task: " + task.getTitle() + " has been marked as completed", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error completing task: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
 }

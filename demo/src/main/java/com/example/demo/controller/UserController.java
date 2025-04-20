@@ -56,7 +56,7 @@ public class UserController {
     public ResponseEntity<String> login(@RequestParam String email, @RequestParam String password) {
         try {
             User user = userService.loginUser(email, password);
-            return new ResponseEntity<>("Welcome back " + user.getUsername() + "!", HttpStatus.OK);
+            return new ResponseEntity<>("Welcome back " + user.getUsername() + "!\nId: "+user.getId()+"\nSession token: "+user.getSessionToken(), HttpStatus.OK);
         } catch (InvalidPasswordException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
         }
