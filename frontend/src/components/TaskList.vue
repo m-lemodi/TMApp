@@ -6,6 +6,7 @@
     <form @submit.prevent="addTask" class="add-task-form">
       <input v-model="newTask.title" placeholder="Task title" required>
       <input v-model="newTask.description" placeholder="Task description">
+      <input type="date" v-model="newTask.dueDate" placeholder="Due Date">
       <button type="submit">Add Task</button>
     </form>
 
@@ -15,14 +16,15 @@
         <div class="task-content">
           <h3>{{ task.title }}</h3>
           <p>{{ task.description }}</p>
+          <p>{{task.dueDate }}</p>
           <p>Status: {{ task.status }}</p>
         </div>
         <div class="task-actions">
-          <button @click="completeTask(task.id)"
+          <button @click="completeTask(task.title)"
                   :disabled="task.status === 'COMPLETED'">
             Complete
           </button>
-          <button @click="deleteTask(task.id)">Delete</button>
+          <button @click="deleteTask(task.title)">Delete</button>
         </div>
       </div>
     </div>

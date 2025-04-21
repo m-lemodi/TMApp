@@ -43,12 +43,12 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<String> listTasksByUser(@RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
+    public ResponseEntity<List<Task>> listTasksByUser(@RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
         try {
             List<Task> tasks = taskService.getAllTasksForUser(userId, sessionToken);
-            return new ResponseEntity<>("Tasks: " + tasks.toString(), HttpStatus.OK);
+            return new ResponseEntity<>(tasks, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Error getting tasks. Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }
 

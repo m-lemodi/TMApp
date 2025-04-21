@@ -48,6 +48,11 @@ export default {
       loading: false
     };
   },
+created() {
+    if (localStorage.getItem('sessionToken') && localStorage.getItem('userId') && localStorage.getItem('username')) {
+      this.$router.push('/tasks');
+    }
+},
 
   methods: {
     async handleLogin() {
@@ -56,10 +61,12 @@ export default {
 
       try {
         const response = await authService.login(this.credentials);
+        this.$emit('login-success', response.data)
 
         // Store the session information
         localStorage.setItem('sessionToken', response.data.sessionToken);
         localStorage.setItem('userId', response.data.userId);
+        localStorage.setItem('username', response.data.username);
 
         // Redirect to tasks page
         this.$router.push('/tasks');
@@ -69,7 +76,8 @@ export default {
       } finally {
         this.loading = false;
       }
-    }
+    },
+
   }
 };
 </script>

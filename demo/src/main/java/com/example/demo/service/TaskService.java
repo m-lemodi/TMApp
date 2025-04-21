@@ -117,7 +117,7 @@ public class TaskService {
             if (!existingTask.getOwner().equals(user)) {
                 throw new InvalidOwnerException("User is not authorized to complete this task");
             }
-            existingTask.setStatus("Completed");
+            existingTask.setStatus("COMPLETED");
             taskRepository.save(existingTask);
             return existingTask;
 

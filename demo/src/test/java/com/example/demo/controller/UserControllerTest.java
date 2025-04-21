@@ -127,11 +127,10 @@ class UserControllerTest {
         when(userService.loginUser(email, password)).thenReturn(mockUser);
 
         // Act
-        ResponseEntity<String> response = userController.login(email, password);
+        ResponseEntity<?> response = userController.login(email, password);
 
         // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().contains("Welcome back"));
     }
 
     @Test
@@ -143,7 +142,7 @@ class UserControllerTest {
                 .thenThrow(new InvalidPasswordException("Invalid credentials"));
 
         // Act
-        ResponseEntity<String> response = userController.login(email, password);
+        ResponseEntity<?> response = userController.login(email, password);
 
         // Assert
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
