@@ -1,4 +1,3 @@
-// services/api.js
 import axios from 'axios';
 
 const api = axios.create({
@@ -45,8 +44,18 @@ export const taskService = {
         });
     },
 
-    completeTask(title, userId, sessionToken) {
-        return api.put(`/tasks/${title}/complete`, null, {
+    changeTaskStatus(title, userId, sessionToken) {
+        return api.put(`/tasks/${title}/status`, null, {
+            headers: {
+                'x-user-id': userId,
+                'x-session-token': sessionToken
+            }
+        });
+    },
+
+    searchTasks(query, userId, sessionToken) {
+        return api.get(`/tasks/search`, {
+            params: { query },
             headers: {
                 'x-user-id': userId,
                 'x-session-token': sessionToken

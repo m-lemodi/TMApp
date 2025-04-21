@@ -8,7 +8,7 @@
     </template>
     <template v-else>
       <span class="username">Welcome, {{ username }}!</span> |
-      <a href="#" @click.prevent="handleLogout">Logout</a>
+      <a href="#" @click.prevent="confirmLogout">Logout</a>
     </template>
   </nav>
   <router-view @login-success="handleLoginSuccess"/>
@@ -39,6 +39,11 @@ export default {
       localStorage.setItem('username', response.username)
       localStorage.setItem('sessionToken', response.sessionToken)
     },
+    confirmLogout() {
+      if (confirm('Are you sure you want to logout?')) {
+        this.handleLogout()
+      }
+    },
     handleLogout() {
       this.isLoggedIn = false
       this.username = ''
@@ -54,6 +59,10 @@ export default {
 <style>
 nav {
   padding: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
 }
 
 nav a {
@@ -66,8 +75,14 @@ nav a.router-link-exact-active {
   color: #42b983;
 }
 
+/* If you have the username display */
 .username {
   font-weight: bold;
   color: #42b983;
+}
+
+/* To ensure consistent spacing between items */
+nav > * {
+  margin: 0 10px;
 }
 </style>
