@@ -32,35 +32,42 @@
   </div>
 </template>
 
+// components/Login.vue
 <script>
-import { authService } from '../services/api';
+import { authService } from '@/services/api';
 
 export default {
   name: 'Login',
-  data(email, password) {
+  data() {
     return {
       credentials: {
-        email: email,
-        password: password
+        email: '',
+        password: ''
       },
       error: null,
-      isLoading: false
+      loading: false
     };
   },
+
   methods: {
     async handleLogin() {
+      this.loading = true;
       this.error = null;
-      this.isLoading = true;
-      
+
       try {
         const response = await authService.login(this.credentials);
+
+        // Store the session information
         localStorage.setItem('sessionToken', response.data.sessionToken);
-        localStorage.setItem('username', response.data.username);
+        localStorage.setItem('userId', response.data.userId);
+
+        // Redirect to tasks page
         this.$router.push('/tasks');
       } catch (error) {
+        console.error('Login error:', error);
         this.error = error.response?.data?.message || 'Login failed';
       } finally {
-        this.isLoading = false;
+        this.loading = false;
       }
     }
   }

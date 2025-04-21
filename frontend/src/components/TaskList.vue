@@ -29,6 +29,7 @@
   </div>
 </template>
 
+// components/TaskList.vue
 <script>
 import { taskService } from '@/services/api';
 
@@ -39,53 +40,84 @@ export default {
       tasks: [],
       newTask: {
         title: '',
-        description: ''
-      }
+        description: '',
+        dueDate: new Date().toISOString().split('T')[0] // Today's date as default
+      },
+      error: null
     };
   },
+
   created() {
     this.loadTasks();
   },
+
   methods: {
     async loadTasks() {
       try {
-        const username = localStorage.getItem('username');
+        const userId = localStorage.getItem('userId');
         const sessionToken = localStorage.getItem('sessionToken');
-        const response = await taskService.getAllTasks(username, sessionToken);
+
+        if (!userId || !sessionToken) {
+          this.$router.push('/login');
+          return;
+        }
+
+        const response = await taskService.getAllTasks(userId, sessionToken);
         this.tasks = response.data;
       } catch (error) {
-        this.error = error.response?.data?.message || 'Error loading tasks';
+        console.error('Error loading tasks:', error);
+        this.error = error.response?.data || 'Error loading tasks';
+
+        if (error.response?.status === 401) {
+          this.$router.push('/login');
+        }
       }
     },
+
     async addTask() {
       try {
-        const username = localStorage.getItem('username');
+        const userId = localStorage.getItem('userId');
         const sessionToken = localStorage.getItem('sessionToken');
-        await taskService.addTask(this.newTask, username, sessionToken);
-        this.newTask = { title: '', description: '' };
+
+        await taskService.addTask(this.newTask, userId, sessionToken);
+
+        // Reset form
+        this.newTask = {
+          title: '',
+          description: '',
+          dueDate: new Date().toISOString().split('T')[0]
+        };
+
         await this.loadTasks();
       } catch (error) {
-        this.error = error.response?.data?.message || 'Error adding task';
+        console.error('Error adding task:', error);
+        this.error = error.response?.data || 'Error adding task';
       }
     },
-    async completeTask(taskId) {
+
+    async completeTask(title) {
       try {
-        const username = localStorage.getItem('username');
+        const userId = localStorage.getItem('userId');
         const sessionToken = localStorage.getItem('sessionToken');
-        await taskService.completeTask(taskId, username, sessionToken);
+
+        await taskService.completeTask(title, userId, sessionToken);
         await this.loadTasks();
       } catch (error) {
-        this.error = error.response?.data?.message || 'Error completing task';
+        console.error('Error completing task:', error);
+        this.error = error.response?.data || 'Error completing task';
       }
     },
-    async deleteTask(taskId) {
+
+    async deleteTask(title) {
       try {
-        const username = localStorage.getItem('username');
+        const userId = localStorage.getItem('userId');
         const sessionToken = localStorage.getItem('sessionToken');
-        await taskService.deleteTask(taskId, username, sessionToken);
+
+        await taskService.deleteTask(title, userId, sessionToken);
         await this.loadTasks();
       } catch (error) {
-        this.error = error.response?.data?.message || 'Error deleting task';
+        console.error('Error deleting task:', error);
+        this.error = error.response?.data || 'Error deleting task';
       }
     }
   }

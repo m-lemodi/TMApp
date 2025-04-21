@@ -1,49 +1,55 @@
+// services/api.js
 import axios from 'axios';
 
-/* eslint-disable */
-
 const api = axios.create({
-    baseURL: 'http://localhost:8080', // Spring Boot default port
-    withCredentials: true
+    baseURL: 'http://localhost:8080',
+    headers: {
+        'Content-Type': 'application/json'
+    }
 });
 
 export const taskService = {
-    getAllTasks(username, sessionToken) {
-        return api.get(`/api/tasks/${username}`, {
+    getAllTasks(userId, sessionToken) {
+        return api.get('/tasks', {
             headers: {
-                'Session-Token': sessionToken
+                'x-user-id': userId,
+                'x-session-token': sessionToken
             }
         });
     },
 
-    addTask(task, username, sessionToken) {
-        return api.post(`/api/tasks/${username}`, task, {
+    addTask(task, userId, sessionToken) {
+        return api.post('/tasks', task, {
             headers: {
-                'Session-Token': sessionToken
+                'x-user-id': userId,
+                'x-session-token': sessionToken
             }
         });
     },
 
-    editTask(taskId, task, username, sessionToken) {
-        return api.put(`/api/tasks/${username}/${taskId}`, task, {
+    editTask(title, task, userId, sessionToken) {
+        return api.put(`/tasks/${title}`, task, {
             headers: {
-                'Session-Token': sessionToken
+                'x-user-id': userId,
+                'x-session-token': sessionToken
             }
         });
     },
 
-    deleteTask(taskId, username, sessionToken) {
-        return api.delete(`/api/tasks/${username}/${taskId}`, {
+    deleteTask(title, userId, sessionToken) {
+        return api.delete(`/tasks/${title}`, {
             headers: {
-                'Session-Token': sessionToken
+                'x-user-id': userId,
+                'x-session-token': sessionToken
             }
         });
     },
 
-    completeTask(taskId, username, sessionToken) {
-        return api.put(`/api/tasks/${username}/${taskId}/complete`, null, {
+    completeTask(title, userId, sessionToken) {
+        return api.put(`/tasks/${title}/complete`, null, {
             headers: {
-                'Session-Token': sessionToken
+                'x-user-id': userId,
+                'x-session-token': sessionToken
             }
         });
     }
@@ -51,10 +57,35 @@ export const taskService = {
 
 export const authService = {
     login(credentials) {
-        return api.post('/users/login', credentials);
+        return api.post('/users/login', null, {
+            params: {
+                email: credentials.email,
+                password: credentials.password
+            }
+        });
     },
 
     register(user) {
-        return api.post('/api/auth/register', user);
+        return api.post('/users/register', user);
     }
 };
+
+// Request interceptor
+api.interceptors.request.use(config => {
+    console.log(`Sending ${config.method.toUpperCase()} request to ${config.url}`);
+    return config;
+}, error => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+});
+
+// Response interceptor
+api.interceptors.response.use(response => {
+    console.log(`Received response from ${response.config.url} with status ${response.status}`);
+    return response;
+}, error => {
+    console.error('Response error:', error);
+    return Promise.reject(error);
+});
+
+export default api;

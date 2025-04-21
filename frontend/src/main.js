@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import { createRouter, createWebHistory } from 'vue-router';
 import App from './App.vue';
 import TaskList from './components/TaskList.vue';
+import Logger from './services/logger'
 
 /* eslint-disable */
 
@@ -49,12 +50,16 @@ const app = createApp(App);
 
 // Global error handler
 app.config.errorHandler = (error, vm, info) => {
+    Logger.error('Global error:', error);
+    Logger.error('Error info:', info);
+
     console.error('Global error:', error);
     if (error.response && error.response.status === 401) {
         localStorage.removeItem('sessionToken');
         localStorage.removeItem('username');
         router.push('/login');
     }
+
 };
 
 // Add router to the app
