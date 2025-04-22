@@ -2,7 +2,6 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.AddTaskDTO;
 import com.example.demo.model.Task;
-import com.example.demo.model.User;
 import com.example.demo.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -43,12 +42,12 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<String> listTasksByUser(@RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
+    public ResponseEntity<List<Task>> listTasksByUser(@RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
         try {
             List<Task> tasks = taskService.getAllTasksForUser(userId, sessionToken);
-            return new ResponseEntity<>("Tasks: " + tasks.toString(), HttpStatus.OK);
+            return new ResponseEntity<>(tasks, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Error getting tasks. Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -64,13 +63,25 @@ public class TaskController {
 
     }
 
-    @PutMapping("/{title}/complete")
-    public ResponseEntity<String> completeTask(@PathVariable String title, @RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
+    @PutMapping("/{title}/status")
+    public ResponseEntity<String> changeTaskStatus(@PathVariable String title, @RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
         try {
-            Task task = taskService.completeTask(title, userId, sessionToken);
-            return new ResponseEntity<>("Task: " + task.getTitle() + " has been marked as completed", HttpStatus.OK);
+            Task task = taskService.changeTaskStatus(title, userId, sessionToken);
+            return new ResponseEntity<>("Task: " + task.getTitle() + " has been marked as " +task.getStatus(), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Error completing task: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Task>> searchTasks(@RequestParam String query, @RequestHeader("x-user-id") String userId, @RequestHeader("x-session-token") String sessionToken) {
+        try {
+            List<Task> tasks = taskService.getAllTasksForUser(userId, sessionToken);
+            tasks.removeIf(task -> !task.getTitle().toLowerCase().contains(query.toLowerCase())
+                    || !task.getDescription().toLowerCase().contains(query.toLowerCase()));
+            return new ResponseEntity<>(tasks, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }
 

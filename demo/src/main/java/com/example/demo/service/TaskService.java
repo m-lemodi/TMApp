@@ -106,7 +106,7 @@ public class TaskService {
 
     }
 
-    public Task completeTask(String title, String userId, String sessionToken) throws IllegalArgumentException, TaskNotFoundException, InvalidOwnerException {
+    public Task changeTaskStatus(String title, String userId, String sessionToken) throws IllegalArgumentException, TaskNotFoundException, InvalidOwnerException {
         if (title == null) {
             throw new IllegalArgumentException("Title cannot be null");
         }
@@ -117,7 +117,11 @@ public class TaskService {
             if (!existingTask.getOwner().equals(user)) {
                 throw new InvalidOwnerException("User is not authorized to complete this task");
             }
-            existingTask.setStatus("Completed");
+
+            if (existingTask.getStatus().equals("COMPLETED")) {
+                existingTask.setStatus("PENDING");
+            } else existingTask.setStatus("COMPLETED");
+
             taskRepository.save(existingTask);
             return existingTask;
 

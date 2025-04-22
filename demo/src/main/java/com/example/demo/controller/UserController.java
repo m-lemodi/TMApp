@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.LoginResponseDTO;
 import com.example.demo.dto.UserRegistrationDTO;
 import com.example.demo.error.EmailAlreadyExistsException;
 import com.example.demo.error.InvalidPasswordException;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.net.http.HttpResponse;
 
 
 @RestController
@@ -53,10 +56,16 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestParam String email, @RequestParam String password) {
+    public ResponseEntity<?> login(@RequestParam String email, @RequestParam String password) {
         try {
             User user = userService.loginUser(email, password);
-            return new ResponseEntity<>("Welcome back " + user.getUsername() + "!\nId: "+user.getId()+"\nSession token: "+user.getSessionToken(), HttpStatus.OK);
+            LoginResponseDTO response = new LoginResponseDTO(
+                user.getId(),
+                user.getUsername(),
+                user.getSessionToken().toString(),
+        "Welcome back " + user.getUsername() + "!"
+            );
+            return ResponseEntity.ok(response);
         } catch (InvalidPasswordException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
         }
