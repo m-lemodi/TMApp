@@ -42,9 +42,15 @@
 
     <!--   Tasks counter   -->
     <div class="tasks-summary">
-      <span>{{ filteredTasks.length }} tasks shown. </span>
-      <span>({{ completedCount }} completed)</span>
+      <div class="task-counter">
+        <span class="task-count">{{ filteredTasks.length }}</span>
+        <span class="task-count-text">tasks shown</span>
+        <span class="task-count-divider">•</span>
+        <span class="completed-count">{{ completedCount }}</span>
+        <span class="completed-count-text">completed</span>
+      </div>
     </div>
+
 
     <!-- Tasks List -->
     <div class="tasks">
@@ -59,13 +65,13 @@
             <span class="checkmark"></span>
           </label>
           <div class="task-details">
-          <h3>{{ task.title }}</h3>
-          <p>{{ task.description }}</p>
-          <p class="due-date" v-if="task.dueDate">Due: {{ formatDate(task.dueDate) }}</p>
-        </div>
-
+            <h3>{{ task.title }}</h3>
+            <p>{{ task.description }}</p>
+            <p class="due-date" v-if="task.dueDate">Due: {{ formatDate(task.dueDate) }}</p>
+          </div>
         </div>
         <div class="task-actions">
+          <button class="edit-button" @click="editTask(task)">Edit</button>
           <button class="delete-button" @click="deleteTask(task)">Delete</button>
         </div>
       </div>
@@ -79,6 +85,13 @@
         @close="showAddTaskModal = false"
         @submit="addTask"
     />
+    <EditTaskModal
+        :show="showEditTaskModal"
+        :task="selectedTask"
+        @close="showEditTaskModal = false"
+        @submit="handleEditTask"
+    />
+
 
   </div>
 </template>
@@ -86,18 +99,23 @@
 // components/TaskList.vue
 <script>
 import AddTaskModal from './AddTaskModal.vue'
+import EditTaskModal from './EditTaskModal.vue'
+
 import { taskService } from '@/services/api';
 
 export default {
   name: 'TaskList',
-  components: { AddTaskModal},
+  components: { AddTaskModal, EditTaskModal},
   data() {
     return {
       tasks: [],
       showAddTaskModal: false,
+      showEditTaskModal: false,
+      selectedTask: null,
       currentFilter: 'all',
       error: null,
-      searchQuery: ''
+      searchQuery: '',
+      searchTimeout: null,
     };
   },
   computed: {
@@ -184,7 +202,34 @@ export default {
       }
     },
 
-    async deleteTask(task) {
+    editTask(task) {
+      this.selectedTask = task;
+      this.showEditTaskModal = true;
+    },
+    async handleEditTask(taskData) {
+      try {
+        const userId = localStorage.getItem('userId');
+        const sessionToken = localStorage.getItem('sessionToken');
+
+        await taskService.editTask(
+            this.selectedTask.title,
+            taskData,
+            userId,
+            sessionToken
+        );
+
+        await this.loadTasks();
+        this.showEditTaskModal = false;
+        this.selectedTask = null;
+      } catch (error) {
+        console.error('Error editing task:', error);
+        this.error = error.response?.data || 'Error editing task';
+      }
+    },
+
+
+
+  async deleteTask(task) {
       if (confirm('Are you sure you want to delete this task?')) {
 
         try {
@@ -289,6 +334,7 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
+  transform: translate(0%, -50%);
   height: 25px;
   width: 25px;
   background-color: #eee;
@@ -417,4 +463,67 @@ input {
   border: 1px solid #ddd;
   border-radius: 4px;
 }
+
+.search-bar {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.search-bar input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: #42b983;
+  box-shadow: 0 0 5px rgba(66, 185, 131, 0.2);
+}
+
+.tasks-summary {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.task-counter {
+  background-color: #f8f9fa;
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.task-count {
+  font-weight: 600;
+  color: #42b983;
+  font-size: 1.1em;
+}
+
+.completed-count {
+  font-weight: 600;
+  color: #42b983;
+  font-size: 1.1em;
+}
+
+.task-count-text,
+.completed-count-text {
+  color: #6c757d;
+  font-size: 0.9em;
+}
+
+.task-count-divider {
+  color: #dee2e6;
+  margin: 0 4px;
+}
+
 </style>

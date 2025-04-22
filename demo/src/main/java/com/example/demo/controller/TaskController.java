@@ -78,7 +78,7 @@ public class TaskController {
         try {
             List<Task> tasks = taskService.getAllTasksForUser(userId, sessionToken);
             tasks.removeIf(task -> !task.getTitle().toLowerCase().contains(query.toLowerCase())
-                    || !task.getDescription().toLowerCase().contains(query.toLowerCase()));
+                    && !task.getDescription().toLowerCase().contains(query.toLowerCase()));
             return new ResponseEntity<>(tasks, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
