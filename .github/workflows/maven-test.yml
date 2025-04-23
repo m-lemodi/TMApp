@@ -22,7 +22,7 @@ jobs:
         cache: maven
 
     - name: Build and Test with Maven
-      run: mvn test -f pom.xml
+      run: mvn test -f demo/pom.xml
 
     # Optional: Cache Maven packages
     - name: Cache Maven packages
