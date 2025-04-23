@@ -13,16 +13,22 @@ To build and run this project, you'll need at least:
 - npm 10.4
 
 ## Build & Run
-The backend works with Java17:
+
+Init the database:
 ```bash
-cd demo
-java -cp demo com.example.demo.DemoApplication
+$ docker-compose up -d
 ```
 
-To run the frontend interface server, you need npm:
+Start the webservices:
 ```bash
-cd frontend
-npm run serve
+$ cd demo
+$ java -cp demo com.example.demo.DemoApplication
+```
+
+Start the frontend interface server:
+```bash
+$ cd frontend
+$ npm run serve
 ```
 
 You'll also need a working PostreSQL database running.
