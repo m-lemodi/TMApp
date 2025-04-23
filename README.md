@@ -29,3 +29,5 @@ You'll also need a working PostreSQL database running.
 Fill the file `demo/src/main/resources/application.properties` with the credentials for database connection.
 
 Then, the project is accessible on http://localhost:5173.
+
+![Maven Test](https://github.com/{username}/{repository}/actions/workflows/maven-test.yml/badge.svg)
