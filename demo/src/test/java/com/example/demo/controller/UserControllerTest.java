@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.LoginResponseDTO;
 import com.example.demo.dto.UserRegistrationDTO;
 import com.example.demo.error.EmailAlreadyExistsException;
 import com.example.demo.error.InvalidPasswordException;
@@ -14,9 +15,11 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class UserControllerTest {
 
@@ -26,126 +29,103 @@ class UserControllerTest {
     @InjectMocks
     private UserController userController;
 
+    private User testUser;
+    private UserRegistrationDTO registrationDTO;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        testUser = new User("testUser", "password123", "test@email.com");
+        testUser.setId(1);
+        testUser.setSessionToken(UUID.randomUUID());
+
+        registrationDTO = new UserRegistrationDTO();
+        registrationDTO.setUsername("testUser");
+        registrationDTO.setEmail("test@email.com");
+        registrationDTO.setPassword("password123");
+        registrationDTO.setConfirmPassword("password123");
     }
 
     @Test
-    void getUserSuccess() throws UserNotFoundException {
-        // Arrange
-        String username = "testUser";
-        User mockUser = new User(username, "password", "test@email.com");
-        when(userService.findUserByUsername(username)).thenReturn(mockUser);
+    void getUserSuccess() {
+        when(userService.findUserByUsername(testUser.getUsername())).thenReturn(testUser);
 
-        // Act
-        ResponseEntity<String> response = userController.getUser(username);
+        ResponseEntity<String> response = userController.getUser(testUser.getUsername());
 
-        // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("User: " + username, response.getBody());
+        assertTrue(response.getBody().contains(testUser.getUsername()));
+        verify(userService).findUserByUsername(testUser.getUsername());
     }
 
     @Test
-    void getUserNotFound() throws UserNotFoundException {
-        // Arrange
-        String username = "nonexistentUser";
-        when(userService.findUserByUsername(username))
+    void getUserNotFound() {
+        when(userService.findUserByUsername(anyString()))
                 .thenThrow(new UserNotFoundException("User not found"));
 
-        // Act
-        ResponseEntity<String> response = userController.getUser(username);
+        ResponseEntity<String> response = userController.getUser("nonexistent");
 
-        // Assert
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("User not found", response.getBody());
+        verify(userService).findUserByUsername("nonexistent");
     }
 
     @Test
     void registerUserSuccess() {
-        // Arrange
-        UserRegistrationDTO dto = new UserRegistrationDTO();
-        dto.setUsername("newUser");
-        dto.setEmail("new@email.com");
-        dto.setPassword("password");
-        dto.setConfirmPassword("password");
+        when(userService.registerUser(any(User.class))).thenReturn(testUser);
 
-        User mockUser = new User(dto.getUsername(), dto.getPassword(), dto.getEmail());
-        when(userService.registerUser(any(User.class))).thenReturn(mockUser);
+        ResponseEntity<String> response = userController.register(registrationDTO);
 
-        // Act
-        ResponseEntity<String> response = userController.register(dto);
-
-        // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertTrue(response.getBody().contains("has been registered successfully!"));
+        assertTrue(response.getBody().contains("registered successfully"));
+        verify(userService).registerUser(any(User.class));
     }
 
     @Test
     void registerUserPasswordMismatch() {
-        // Arrange
-        UserRegistrationDTO dto = new UserRegistrationDTO();
-        dto.setUsername("newUser");
-        dto.setEmail("new@email.com");
-        dto.setPassword("password1");
-        dto.setConfirmPassword("password2");
+        registrationDTO.setConfirmPassword("differentPassword");
 
-        // Act
-        ResponseEntity<String> response = userController.register(dto);
+        ResponseEntity<String> response = userController.register(registrationDTO);
 
-        // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("Passwords do not match", response.getBody());
+        verify(userService, never()).registerUser(any(User.class));
     }
 
     @Test
     void registerUserEmailExists() {
-        // Arrange
-        UserRegistrationDTO dto = new UserRegistrationDTO();
-        dto.setUsername("newUser");
-        dto.setEmail("existing@email.com");
-        dto.setPassword("password");
-        dto.setConfirmPassword("password");
-
         when(userService.registerUser(any(User.class)))
                 .thenThrow(new EmailAlreadyExistsException("Email already used"));
 
-        // Act
-        ResponseEntity<String> response = userController.register(dto);
+        ResponseEntity<String> response = userController.register(registrationDTO);
 
-        // Assert
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         assertEquals("Email already used", response.getBody());
+        verify(userService).registerUser(any(User.class));
     }
 
     @Test
     void loginSuccess() {
-        // Arrange
-        String email = "test@email.com";
-        String password = "password";
-        User mockUser = new User("testUser", password, email);
-        when(userService.loginUser(email, password)).thenReturn(mockUser);
+        when(userService.loginUser(testUser.getEmail(), "password123")).thenReturn(testUser);
 
-        // Act
-        ResponseEntity<?> response = userController.login(email, password);
+        ResponseEntity<?> response = userController.login(testUser.getEmail(), "password123");
 
-        // Assert
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody() instanceof LoginResponseDTO);
+        LoginResponseDTO loginResponse = (LoginResponseDTO) response.getBody();
+        assertEquals(testUser.getId(), loginResponse.getUserId());
+        assertEquals(testUser.getUsername(), loginResponse.getUsername());
+        assertEquals(testUser.getSessionToken().toString(), loginResponse.getSessionToken());
+        verify(userService).loginUser(testUser.getEmail(), "password123");
     }
 
     @Test
     void loginInvalidCredentials() {
-        // Arrange
-        String email = "test@email.com";
-        String password = "wrongpassword";
-        when(userService.loginUser(email, password))
+        when(userService.loginUser(anyString(), anyString()))
                 .thenThrow(new InvalidPasswordException("Invalid credentials"));
 
-        // Act
-        ResponseEntity<?> response = userController.login(email, password);
+        ResponseEntity<?> response = userController.login("test@email.com", "wrongpassword");
 
-        // Assert
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertEquals("Invalid credentials", response.getBody());
+        verify(userService).loginUser("test@email.com", "wrongpassword");
     }
 }

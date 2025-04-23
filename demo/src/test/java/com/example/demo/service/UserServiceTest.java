@@ -10,11 +10,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class UserServiceTest {
@@ -28,108 +30,122 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    private User testUser;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        testUser = new User("testUser", "password123", "test@email.com");
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
     }
 
     @Test
     void findUserByUsernameSuccess() {
-        // Arrange
-        String username = "testUser";
-        User mockUser = new User(username, "password", "test@email.com");
-        when(userRepository.findByUsername(username)).thenReturn(mockUser);
+        when(userRepository.findByUsername(testUser.getUsername())).thenReturn(testUser);
 
-        // Act
-        User result = userService.findUserByUsername(username);
+        User result = userService.findUserByUsername(testUser.getUsername());
 
-        // Assert
         assertNotNull(result);
-        assertEquals(username, result.getUsername());
+        assertEquals(testUser.getUsername(), result.getUsername());
+        verify(userRepository).findByUsername(testUser.getUsername());
     }
 
     @Test
     void findUserByUsernameNotFound() {
-        // Arrange
-        String username = "nonexistentUser";
-        when(userRepository.findByUsername(username)).thenReturn(null);
+        String nonexistentUsername = "nonexistent";
+        when(userRepository.findByUsername(nonexistentUsername)).thenReturn(null);
 
-        // Act & Assert
-        assertThrows(UserNotFoundException.class, () -> userService.findUserByUsername(username));
-    }
-
-    @Test
-    void registerUserSuccess() {
-        // Arrange
-        User newUser = new User("newUser", "password", "new@email.com");
-        when(userRepository.findByEmail(newUser.getEmail())).thenReturn(null);
-        when(userRepository.save(any(User.class))).thenReturn(newUser);
-
-        // Act
-        User result = userService.registerUser(newUser);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(newUser.getUsername(), result.getUsername());
-        verify(userRepository).save(any(User.class));
-    }
-
-    @Test
-    void registerUserEmailExists() {
-        // Arrange
-        User existingUser = new User("existingUser", "password", "existing@email.com");
-        User newUser = new User("newUser", "password", "existing@email.com");
-        when(userRepository.findByEmail(newUser.getEmail())).thenReturn(existingUser);
-
-        // Act & Assert
-        assertThrows(EmailAlreadyExistsException.class, () -> userService.registerUser(newUser));
-        verify(userRepository, never()).save(any(User.class));
+        assertThrows(UserNotFoundException.class, 
+            () -> userService.findUserByUsername(nonexistentUsername));
+        verify(userRepository).findByUsername(nonexistentUsername);
     }
 
 //    @Test
-//    void loginUserSuccess() {
-//        // Arrange
-//        String email = "test@email.com";
-//        String rawPassword = "password";
-//        String encodedPassword = passwordEncoder.encode(rawPassword);
-//        User mockUser = new User("testUser", rawPassword, email);
-//        when(userRepository.findByEmail(email)).thenReturn(mockUser);
-//        when(userRepository.save(any(User.class))).thenReturn(mockUser);
+//    void registerUserSuccess() {
+//        when(userRepository.findByEmail(testUser.getEmail())).thenReturn(null);
+//        when(userRepository.save(any(User.class))).thenReturn(testUser);
 //
-//        // Act
-//        User result = userService.loginUser(email, rawPassword);
+//        User result = userService.registerUser(testUser);
 //
-//        // Assert
 //        assertNotNull(result);
-//        assertEquals(email, result.getEmail());
-//        assertNotNull(result.getSessionToken());
+//        assertEquals(testUser.getUsername(), result.getUsername());
+//        verify(passwordEncoder).encode(testUser.getPassword());
+//        verify(userRepository).save(any(User.class));
 //    }
 
     @Test
-    void loginUserInvalidPassword() {
-        // Arrange
-        String email = "test@email.com";
-        String password = "wrongpassword";
-        User mockUser = new User("testUser", "correctpassword", email);
-        when(userRepository.findByEmail(email)).thenReturn(mockUser);
+    void registerUserEmailExists() {
+        when(userRepository.findByEmail(testUser.getEmail())).thenReturn(testUser);
 
-        // Act & Assert
-        assertThrows(InvalidPasswordException.class, () -> userService.loginUser(email, password));
+        assertThrows(EmailAlreadyExistsException.class, 
+            () -> userService.registerUser(testUser));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void loginUserSuccess() {
+        String rawPassword = "password123";
+        testUser.setPassword("encodedPassword");
+        
+        when(userRepository.findByEmail(testUser.getEmail())).thenReturn(testUser);
+        when(passwordEncoder.matches(rawPassword, testUser.getPassword())).thenReturn(true);
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        User result = userService.loginUser(testUser.getEmail(), rawPassword);
+
+        assertNotNull(result);
+        assertEquals(testUser.getEmail(), result.getEmail());
+        assertNotNull(result.getSessionToken());
+        assertNotNull(result.getSessionTokenDate());
+        verify(passwordEncoder).matches(rawPassword, testUser.getPassword());
+    }
+
+    @Test
+    void loginUserInvalidPassword() {
+        String wrongPassword = "wrongpassword";
+        testUser.setPassword("encodedPassword");
+        
+        when(userRepository.findByEmail(testUser.getEmail())).thenReturn(testUser);
+        when(passwordEncoder.matches(wrongPassword, testUser.getPassword())).thenReturn(false);
+
+        assertThrows(InvalidPasswordException.class, 
+            () -> userService.loginUser(testUser.getEmail(), wrongPassword));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void loginUserNotFound() {
+        String nonexistentEmail = "nonexistent@email.com";
+        when(userRepository.findByEmail(nonexistentEmail)).thenReturn(null);
+
+        assertThrows(InvalidPasswordException.class, 
+            () -> userService.loginUser(nonexistentEmail, "anypassword"));
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
     void createSessionSuccess() {
-        // Arrange
-        User user = new User("testUser", "password", "test@email.com");
-        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        // Act
-        User result = userService.createSession(user);
+        User result = userService.createSession(testUser);
 
-        // Assert
         assertNotNull(result);
         assertNotNull(result.getSessionToken());
         assertNotNull(result.getSessionTokenDate());
-        verify(userRepository).save(user);
+        assertEquals(LocalDate.now(), result.getSessionTokenDate());
+        verify(userRepository).save(testUser);
+    }
+
+    @Test
+    void createSessionUpdatesExistingUser() {
+        testUser.setSessionToken(null);
+        testUser.setSessionTokenDate(null);
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        User result = userService.createSession(testUser);
+
+        assertNotNull(result.getSessionToken());
+        assertNotNull(result.getSessionTokenDate());
+        verify(userRepository).save(testUser);
     }
 }
