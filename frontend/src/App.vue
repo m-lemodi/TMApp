@@ -1,88 +1,62 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/tasks">Tasks</router-link> |
-    <template v-if="!isLoggedIn">
-      <router-link to="/login">Login</router-link> |
-      <router-link to="/register">Register</router-link>
-    </template>
-    <template v-else>
-      <span class="username">Welcome, {{ username }}!</span> |
-      <a href="#" @click.prevent="confirmLogout">Logout</a>
-    </template>
-  </nav>
-  <router-view @login-success="handleLoginSuccess"/>
+  <div id="app">
+    <nav-bar :key="$route.fullPath + navbarKey"></nav-bar>
+    <main class="main-content">
+      <router-view></router-view>
+    </main>
+  </div>
 </template>
 
 <script>
+import NavBar from '@/components/NavBar.vue'
+
 export default {
   name: 'App',
+  components: {
+    NavBar
+  },
   data() {
     return {
-      isLoggedIn: false,
-      username: ''
+      navbarKey: 0,
     }
   },
-  created() {
-    // Check if user is already logged in when app starts
-    const sessionToken = localStorage.getItem('sessionToken')
-    const username = localStorage.getItem('username')
-    if (sessionToken && username) {
-      this.isLoggedIn = true
-      this.username = username
-    }
-  },
-  methods: {
-    handleLoginSuccess(response) {
-      this.isLoggedIn = true
-      this.username = response.username
-      localStorage.setItem('username', response.username)
-      localStorage.setItem('sessionToken', response.sessionToken)
-    },
-    confirmLogout() {
-      if (confirm('Are you sure you want to logout?')) {
-        this.handleLogout()
+  watch: {
+    // Watch auth status globally
+    '$route'() {
+      if (this.isLoggedIn) {
+        this.navbarKey++; // Force navbar remount on route change when authenticated
       }
-    },
-    handleLogout() {
-      this.isLoggedIn = false
-      this.username = ''
-      localStorage.removeItem('sessionToken')
-      localStorage.removeItem('username')
-      // Redirect to login page
-      this.$router.push('/login')
     }
   }
+
 }
 </script>
 
 <style>
-nav {
-  padding: 30px;
+:root {
+  --navbar-height: 64px; /* Define navbar height as a CSS variable */
+}
+
+#app {
+  min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
+  flex-direction: column;
 }
 
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-  text-decoration: none;
+.main-content {
+  padding-top: var(--navbar-height); /* Add padding equal to navbar height */
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 20px;
+  padding-right: 20px;
+  box-sizing: border-box;
 }
 
-nav a.router-link-exact-active {
-  color: #42b983;
-}
-
-/* If you have the username display */
-.username {
-  font-weight: bold;
-  color: #42b983;
-}
-
-/* To ensure consistent spacing between items */
-nav > * {
-  margin: 0 10px;
+/* Reset default margins and padding */
+body {
+  margin: 0;
+  padding: 0;
 }
 </style>

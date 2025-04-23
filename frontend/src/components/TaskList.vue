@@ -117,8 +117,11 @@ export default {
       searchQuery: '',
       searchTimeout: null,
     };
+
+
   },
   computed: {
+
     filteredTasks() {
       switch (this.currentFilter) {
         case 'completed':
@@ -139,6 +142,7 @@ export default {
   },
 
   methods: {
+
     formatDate(date) {
       return new Date(date).toLocaleDateString('fr-FR', )
     },
@@ -201,6 +205,11 @@ export default {
       try {
         const userId = localStorage.getItem('userId');
         const sessionToken = localStorage.getItem('sessionToken');
+
+        if (!userId || !sessionToken) {
+          this.$router.push('/login');
+          return;
+        }
 
         const task = {
           title: taskData.title,

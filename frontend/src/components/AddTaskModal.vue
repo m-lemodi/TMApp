@@ -11,6 +11,7 @@
             type="text"
             required
             placeholder="Enter task title"
+            @input="validateTitle"
           >
         </div>
 
@@ -53,6 +54,7 @@ export default {
     }
   },
   data() {
+
     return {
       taskData: {
         title: '',
@@ -67,14 +69,24 @@ export default {
     }
   },
   methods: {
+
     closeModal() {
       this.$emit('close')
       this.resetForm()
     },
     submitTask() {
-      this.$emit('submit', { ...this.taskData })
-      this.resetForm()
-      this.closeModal()
+      const validationPattern = /^[a-zA-Z0-9\s]+$/;
+
+      if (!validationPattern.test(this.taskData.title)) {
+        alert('Title cannot contain special characters');
+      } else if (this.taskData.title.trim().length === 0) {
+        alert('Title cannot be empty');
+      } else {
+        this.$emit('submit', { ...this.taskData })
+        this.resetForm()
+        this.closeModal()
+      }
+
     },
     resetForm() {
       this.taskData = {

@@ -51,6 +51,12 @@ export default {
 created() {
     if (localStorage.getItem('sessionToken') && localStorage.getItem('userId') && localStorage.getItem('username')) {
       this.$router.push('/tasks');
+      this.$emit('login-success', {
+        sessionToken: localStorage.getItem('sessionToken'),
+        userId: localStorage.getItem('userId'),
+        username: localStorage.getItem('username')
+      })
+      this.isLoggedIn = true;
     }
 },
 

@@ -2,7 +2,7 @@
   <div v-if="show" class="modal-overlay" @click.self="closeModal">
     <div class="modal">
       <h3>Edit Task</h3>
-      <form @submit.prevent="validateAndSubmit">
+      <form @submit.prevent="submitTask">
         <div class="form-group">
           <label for="title">Title</label>
           <input 
@@ -87,30 +87,22 @@ export default {
     }
   },
   methods: {
-    validateTitle() {
-      const specialCharsRegex = new RegExp("[!@#$%^&*()_+-=[]{};':|,.<>/?]+/");
 
-      if (specialCharsRegex.test(this.taskData.title)) {
-        this.titleError = 'Title cannot contain special characters';
-      } else if (this.taskData.title.trim().length === 0) {
-        this.titleError = 'Title cannot be empty';
-      } else {
-        this.titleError = '';
-      }
-    },
-    validateAndSubmit() {
-      this.validateTitle();
-      
-      if (!this.titleError) {
-        this.submitTask();
-      }
-    },
     submitTask() {
-      this.$emit('submit', { 
-        ...this.taskData,
-        title: this.taskData.title.trim()
-      });
-      this.closeModal();
+
+      const validationPattern = /^[a-zA-Z0-9\s]+$/;
+
+      if (!validationPattern.test(this.taskData.title)) {
+        alert('Title cannot contain special characters');
+      } else if (this.taskData.title.trim().length === 0) {
+        alert('Title cannot be empty');
+      } else {
+        this.$emit('submit', {
+          ...this.taskData,
+          title: this.taskData.title.trim()
+        });
+        this.closeModal();
+      }
     },
     closeModal() {
       this.$emit('close');
