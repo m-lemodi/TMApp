@@ -29,6 +29,15 @@
           required
         >
       </div>
+      <div class="form-group">
+        <label for="password">Confirm Password:</label>
+        <input
+            type="password"
+            id="confirmPassword"
+            v-model="user.confirmPassword"
+            required
+        >
+      </div>
       <div class="error" v-if="error">{{ error }}</div>
       <button type="submit" :disabled="isLoading">
         {{ isLoading ? 'Registering...' : 'Register' }}
@@ -51,7 +60,8 @@ export default {
       user: {
         email: '',
         username: '',
-        password: ''
+        password: '',
+        confirmPassword: ''
       },
       error: null,
       isLoading: false

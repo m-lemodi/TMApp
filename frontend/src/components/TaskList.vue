@@ -142,14 +142,33 @@ export default {
     formatDate(date) {
       return new Date(date).toLocaleDateString('fr-FR', )
     },
+
     async toggleTaskStatus(task) {
       try {
         const userId = localStorage.getItem('userId')
         const sessionToken = localStorage.getItem('sessionToken')
 
         await taskService.changeTaskStatus(task.title, userId, sessionToken)
+
         // Update the local task status
         task.status = task.status === 'COMPLETED' ? 'PENDING' : 'COMPLETED'
+
+        // Push a notification to the user
+        if (!("Notification" in window)) {
+          alert('Please enable notifications to mark tasks as completed.')
+          return;
+        }
+        if (Notification.permission === "granted") {
+          const notification = new Notification("Task Completed", {
+            body: `Task "${task.title}" is ${task.status.toLowerCase()}.`,
+          });
+          notification.onclick = () => {
+            window.focus();
+          };
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission();
+        }
+        
       } catch (error) {
         console.error('Error toggling task status:', error)
         alert('Failed to update task status. Please try again.')
@@ -196,9 +215,25 @@ export default {
 
 
         await this.loadTasks();
+
+        if (Notification.permission === "granted") {
+          new Notification("Task Added", {
+            body: `New task "${taskData.title}" has been added successfully.`
+          });
+        } else if (Notification.permission !== "denied") {
+          Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+              new Notification("Task Added", {
+                body: `New task "${taskData.title}" has been added successfully.`
+              });
+            }
+          });
+        }
+
       } catch (error) {
         console.error('Error adding task:', error);
         this.error = error.response?.data || 'Error adding task';
+
       }
     },
 

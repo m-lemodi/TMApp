@@ -4,8 +4,6 @@ import App from './App.vue';
 import TaskList from './components/TaskList.vue';
 import Logger from './services/logger'
 
-/* eslint-disable */
-
 // Route guard to check authentication
 const requireAuth = (to, from, next) => {
     const sessionToken = localStorage.getItem('sessionToken');
