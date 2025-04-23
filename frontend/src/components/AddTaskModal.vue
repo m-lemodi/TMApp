@@ -51,6 +51,10 @@ export default {
     show: {
       type: Boolean,
       required: true
+    },
+    tasks: {
+      type: Array,
+      required: true
     }
   },
   data() {
@@ -81,12 +85,13 @@ export default {
         alert('Title cannot contain special characters');
       } else if (this.taskData.title.trim().length === 0) {
         alert('Title cannot be empty');
+      } else if (this.tasks.some(task => task.title.toLowerCase() === this.taskData.title.toLowerCase())) {
+        alert('Task with this title already exists');
       } else {
         this.$emit('submit', { ...this.taskData })
         this.resetForm()
         this.closeModal()
       }
-
     },
     resetForm() {
       this.taskData = {

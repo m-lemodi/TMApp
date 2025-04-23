@@ -82,6 +82,7 @@
 
     <AddTaskModal
         :show="showAddTaskModal"
+        :tasks="tasks"
         @close="showAddTaskModal = false"
         @submit="addTask"
     />
